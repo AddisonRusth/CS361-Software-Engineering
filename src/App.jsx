@@ -1,4 +1,5 @@
 import React, {useEffect, useMemo, useRef, useState} from "react";
+import { exportCaseSummaryPDF } from './services/pdfExporter.js';
 
 /*
   Medic Logger – Milestone #1 (User Stories 1–3)
@@ -319,6 +320,57 @@ function ExportPanel({ op }) {
   );
 }
 
+function PdfExport({ op }) {
+  const [error, setError] = useState(null);
+  const [info, setInfo] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onExport() {
+    if (!op) {
+      setError('Start and complete a case summary before exporting.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    const start = performance.now();
+    try {
+      await exportCaseSummaryPDF(op);
+      const elapsed = ((performance.now() - start) / 1000).toFixed(2);
+      setInfo(`PDF generated and download started in ${elapsed}s.`);
+    } catch (e) {
+      console.error('PDF export failed', e);
+      setError('Export failed. Please retry. No file was saved.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Section
+      title="Case Summary PDF Export"
+      subtitle="Exports the current case via an external PDF microservice (configure VITE_PDF_SERVICE_URL) with consistent layout, confidentiality footer, and multi-page support"
+    >
+      <div className="flex flex-wrap gap-3 mb-3">
+        <button
+          className={`px-4 py-2 rounded-2xl border ${busy ? 'opacity-60' : ''}`}
+          onClick={onExport}
+          disabled={busy || !op}
+          aria-label="Export case summary to PDF"
+        >
+          {busy ? 'Generating…' : 'Export to PDF'}
+        </button>
+        <p className="text-sm opacity-80">
+          Calls the external PDF export service (default http://localhost:4000; hosted in its own repo) using a single template file for layout, includes a confidentiality footer, and handles large summaries without truncation.
+        </p>
+      </div>
+      {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
+      {info && <p className="text-sm text-green-700" role="status">{info}</p>}
+      {!op && <p className="text-sm opacity-70">Start logging a case to enable PDF export.</p>}
+    </Section>
+  );
+}
+
 export default function App() {
   const [state, setState] = useState(() => loadState());
   useAutosave(state);
@@ -344,6 +396,7 @@ export default function App() {
       <StartOperation current={state.current} onStartNew={startNew} onAbandon={abandon} />
       <VitalsForm op={state.current} onChange={update} />
       <Treatments op={state.current} onChange={update} />
+      <PdfExport op={state.current} />
       <ExportPanel op={state.current} />
 
       <footer className="max-w-3xl mx-auto my-8 text-xs opacity-70">

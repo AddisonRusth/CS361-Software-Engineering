@@ -107,6 +107,13 @@ All stories are complete and demonstrable, fulfilling the **CS361 Milestone #1 r
 npm install
 npm run dev
 ```
+
+### PDF export microservice (external)
+- The backend PDF export service now lives in a separate repository; this repo only contains the front-end client that calls it.
+- The caller file lives at **`src/services/pdfExporter.js`**. It is already imported by `src/App.jsx`, so no other front-end wiring is needed—just update the environment URL.
+- Set `VITE_PDF_SERVICE_URL` in a `.env` file (for example `http://localhost:4000`) so the front end knows where to send export requests.
+- The UI will surface errors if the service is unreachable; start the external service separately before clicking **Export to PDF**.
+- See `PDF-Export-Service.md` in this repo for the exact file tree and source code to populate the separate **PDF-Export-Service** backend repository.
 If your Node.js version is below 20, either upgrade to Node 22 (recommended) or run:
 ```bash
 npm i -D vite@4.5.3 @vitejs/plugin-react@3.1.0
